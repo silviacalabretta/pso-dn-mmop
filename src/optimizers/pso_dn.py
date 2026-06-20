@@ -7,7 +7,7 @@ import numpy.typing as npt
 from typing import Union, Optional, List
 
 from .base_optimizers import BasePSO
-from src.archives import Archive  # Assuming you moved this to src/archives.py
+from src.archives import Archive 
 from src.mo_utils import get_sorted_fronts_and_scd, scd_for_front
 
 
@@ -21,7 +21,7 @@ class PSODN(BasePSO):
                  c2: float = 1.49445,                            
                  v_bounds: Optional[npt.ArrayLike] = None):      
         
-        # unitialize the BasePSO parameters
+        # initialize the BasePSO parameters
         super().__init__(pop_size, n_iter, w, c1, c2, v_bounds)
         
         # PSO-DN specific parameter
@@ -40,9 +40,10 @@ class PSODN(BasePSO):
 
         # initialize positions and velocities
         positions = np.random.uniform(x_bounds[:,0], x_bounds[:,1], size=(self.pop_size, D))
-        signs = np.random.choice([-1, 1], size=(self.pop_size, D))
-        magnitudes = np.random.uniform(self.v_bounds[:, 0], self.v_bounds[:, 1], size=(self.pop_size, D))
-        velocities = signs * magnitudes    
+        # signs = np.random.choice([-1, 1], size=(self.pop_size, D))
+        # magnitudes = np.random.uniform(self.v_bounds[:, 0], self.v_bounds[:, 1], size=(self.pop_size, D))
+        # velocities = signs * magnitudes    
+        velocities = np.zeros((self.pop_size, D))
 
         # evaluate initial population
         fitnesses = problem.evaluate_population(positions)

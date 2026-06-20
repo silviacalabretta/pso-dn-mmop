@@ -1,6 +1,7 @@
 import numpy as np
 from src.problem import LocationProblem
 from src.optimizers.pso_dn import PSODN
+from src.optimizers.mopso_cd import MOPSO_CD
 from src.plot_utils import plot_city_map_with_solutions
 from data.test_map import facilities, infrastructure, map_styles, x_bounds, v_bounds
 
@@ -25,11 +26,24 @@ def main():
     )
 
     # instantiate the optimizer
-    print("Initializing the PSO-DN Optimizer...")
-    optimizer = PSODN(
+
+    # print("Initializing the PSO-DN Optimizer...")
+    # optimizer = PSODN(
+    #     pop_size=100, 
+    #     n_iter=200, 
+    #     R_l=10.0,       
+    #     w=0.729,          
+    #     c1=1.49445, 
+    #     c2=1.49445, 
+    #     v_bounds=v_bounds
+    # )
+
+    print("Initializing the MOPSO_CD Optimizer...")
+    optimizer = MOPSO_CD(
         pop_size=100, 
-        n_iter=500, 
-        R_l=10.0,       
+        n_iter=200, 
+        Q=500,
+        tourn_size = 2,       
         w=0.8,          
         c1=1.49445, 
         c2=1.49445, 
