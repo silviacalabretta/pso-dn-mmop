@@ -53,16 +53,13 @@ class MOPSO_CD(BasePSO):
         pbest_fit = fitnesses.copy()
 
         # initialize global repository
-        best_front = nds.do(fitnesses, only_non_dominated_front=True)
-        rep_archive = Archive(
-            positions = list(positions[best_front]),
-            fitnesses = list(fitnesses[best_front])
-        )
+        rep_archive = Archive()
+        rep_archive.update_with_dominance(positions, fitnesses, nds)
         self._truncate_repository(rep_archive)
         
         hist = [positions.copy()]
         
-        for _ in tqdm(range(self.n_iter), desc="Running MOPSO_CD"):
+        for i in tqdm(range(self.n_iter), desc="Running MOPSO_CD"):
             
             # select leaders for each particle via tournament
             leaders = self._select_leaders(rep_archive)
@@ -75,14 +72,13 @@ class MOPSO_CD(BasePSO):
             fitnesses = problem.evaluate_population(positions)
             
             # update personal bests
-            self._update_pbests(pbest_pos, pbest_fit, positions, fitnesses)
-            
-            # update global repository
-            for i in range(self.pop_size):
-                rep_archive.update_with_dominance(positions[i], fitnesses[i])
-            self._truncate_repository(rep_archive)
+            self._update_archives(pbest_pos, pbest_fit, rep_archive, positions, fitnesses, nds)
             
             hist.append(positions.copy())
+            if(i%20==1):
+                rep_archive.remove_similar_solutions()
+        
+        rep_archive.remove_similar_solutions()
             
         return rep_archive, hist
 
@@ -113,27 +109,34 @@ class MOPSO_CD(BasePSO):
             
         return leaders
     
-    def _update_pbests(self, pbest_pos, pbest_fit, new_pos, new_fit):
+    def _update_archives(self, pbest_pos: np.ndarray, pbest_fit: np.ndarray, rep_archive: Archive, positions: np.ndarray, fitnesses: np.ndarray, nds: NonDominatedSorting):
         """
         Updates the personal best of each particle based on Pareto dominance.
         """
+        # update personal best
         for i in range(self.pop_size):
             current_best_fit = pbest_fit[i]
-            current_new_fit = new_fit[i]
+            new_fit = fitnesses[i]
             
-            dominates = np.all(current_new_fit <= current_best_fit) and np.any(current_new_fit < current_best_fit)
-            is_dominated = np.all(current_best_fit <= current_new_fit) and np.any(current_best_fit < current_new_fit)
+            dominates = np.all(new_fit <= current_best_fit) and np.any(new_fit < current_best_fit)
+            is_dominated = np.all(current_best_fit <= new_fit) and np.any(current_best_fit < new_fit)
             
             # If new position dominates, replace. 
             # If mutually non-dominated, replace randomly to maintain search diversity.
             if dominates or (not is_dominated and np.random.rand() < 0.5):
-                pbest_pos[i] = new_pos[i].copy()
-                pbest_fit[i] = new_fit[i].copy()
+                pbest_pos[i] = positions[i].copy()
+                pbest_fit[i] = fitnesses[i].copy()
+
+        #update global best
+        rep_archive.update_with_dominance(positions,fitnesses,nds)
+        
+        self._truncate_repository(rep_archive)
+
 
     def _truncate_repository(self, rep_archive: Archive) -> None:
         """
         Enforces the limited size Q of the repository.
-        If size > Q, removes particles with higher crowding distance.
+        If size > Q, keeps particles with higher crowding distance.
         """
         rep_pos, rep_fit = rep_archive.extract_arrays()
         

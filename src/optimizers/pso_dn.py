@@ -59,15 +59,12 @@ class PSODN(BasePSO):
         ]
 
         # global best archive (all non-dominated solutions found so far)
-        best_front = nds.do(fitnesses, only_non_dominated_front=True)
-        gba_archive = Archive(
-            positions = list(positions[best_front]),
-            fitnesses = list(fitnesses[best_front])
-        )
+        gba_archive = Archive()
+        gba_archive.update_with_dominance(positions,fitnesses,nds)
         
         hist = [positions.copy()]
         
-        for _ in tqdm(range(self.n_iter), desc="Running PSO-DN"):
+        for i in tqdm(range(self.n_iter), desc="Running PSO-DN"):
             
             sorted_fronts, _ = get_sorted_fronts_and_scd(positions, fitnesses, nds)
 
@@ -83,6 +80,10 @@ class PSODN(BasePSO):
             
             self._update_archives(pba_archives, gba_archive, positions, fitnesses, nds)
             hist.append(positions.copy())
+            if(i%20==1):
+                gba_archive.remove_similar_solutions()
+
+        gba_archive.remove_similar_solutions()
             
         return gba_archive, hist
         
@@ -144,14 +145,7 @@ class PSODN(BasePSO):
             pba_archives[i].update_with_dominance(positions[i], fitnesses[i])
 
         # update GBA
-        current_gba_pos, current_gba_fit = gba_archive.extract_arrays()
-        combined_pos = np.vstack([current_gba_pos, positions])
-        combined_fit = np.vstack([current_gba_fit, fitnesses])
-
-        best_front = nds.do(combined_fit, only_non_dominated_front=True)
-
-        gba_archive.positions = list(combined_pos[best_front])
-        gba_archive.fitnesses = list(combined_fit[best_front])
+        gba_archive.update_with_dominance(positions,fitnesses,nds)
 
 
     def _get_dynamic_radius(self, dist_matrix, non_dom_indices):
