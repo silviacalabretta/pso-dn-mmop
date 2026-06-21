@@ -29,8 +29,8 @@ def main():
 
     # print("Initializing the PSO-DN Optimizer...")
     # optimizer = PSODN(
-    #     pop_size=100, 
-    #     n_iter=200, 
+    #     pop_size=200, 
+    #     n_iter=100, 
     #     R_l=10.0,       
     #     w=0.729,          
     #     c1=1.49445, 
@@ -40,8 +40,8 @@ def main():
 
     print("Initializing the MOPSO_CD Optimizer...")
     optimizer = MOPSO_CD(
-        pop_size=100, 
-        n_iter=200, 
+        pop_size=200, 
+        n_iter=100, 
         Q=500,
         tourn_size = 2,       
         w=0.8,          

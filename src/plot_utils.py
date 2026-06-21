@@ -31,11 +31,15 @@ def smooth_path(path, iterations=4):
         
     return current_path
 
-def plot_city_map(point_data, line_data, styles):
+def plot_city_map(point_data, line_data, styles, ax=None):
     """
     Plots a generic 2D map. Now supports automatic smoothing for lines.
     """
-    fig, ax = plt.subplots(figsize=(8, 8))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 8))
+        standalone = True
+    else:
+        standalone = False
 
     # 1. Plot Lines (Roads, Railways)
     for category, paths in line_data.items():
@@ -91,11 +95,12 @@ def plot_city_map(point_data, line_data, styles):
     if ax.get_legend_handles_labels()[0]:
         ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0.)
 
-    plt.tight_layout()
-    plt.show()
+    if standalone:
+        plt.tight_layout()
+        plt.show()
 
 
-def plot_city_map_with_solutions(point_data, line_data, styles, solutions, label="Solutions", color="#ff00ff", marker="*", size=150):
+def plot_city_map_with_solutions(point_data, line_data, styles, solutions, label="Solutions", color="#ff00ff", marker="*", size=150, ax=None):
     """
     Wrapper around plot_city_map that temporarily injects algorithm solutions 
     (or population history) into the plotting dictionaries without mutating the originals.
@@ -121,4 +126,4 @@ def plot_city_map_with_solutions(point_data, line_data, styles, solutions, label
     }
     
     # Call the existing plotting function
-    plot_city_map(points_copy, line_data, styles_copy)
+    plot_city_map(points_copy, line_data, styles_copy, ax=ax)
