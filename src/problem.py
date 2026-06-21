@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from typing import Optional, Dict, List, Any
 import copy
+from shapely.geometry import Point, LineString, MultiLineString
+from src.plot_utils import smooth_path
 
 
 class LocationProblem():
@@ -161,3 +163,44 @@ class LocationProblem():
         # fitness_score is a list of M arrays of size N
         # stack the list into an (N, M) matrix
         return np.column_stack(fitness_scores)
+    
+
+    def impose_infrastructure_constraints(self,positions, fitnesses, clearance=1.0):
+        """
+        Removes solutions that are located on or too close to roads and railways.
+        
+        Parameters:
+        - positions (np.ndarray of shape (N, 2)): position coordinates coordinates
+        - fitnesses (np.ndarray of shape (N, M)): objective values
+        - clearance_distance (float): minimum distance a solution must be from a line to survive
+        """
+        if len(positions) == 0:
+            return positions, fitnesses
+
+        all_lines = []
+        
+        # add roads (simple straight segments)
+        for road_segment in self.infrastructure.get('Roads', []):
+            all_lines.append(LineString(road_segment))
+            
+        # add railways (polylines connecting multiple points)
+        for railway_path in self.infrastructure.get('Railways', []):
+            smoothed_path = smooth_path(railway_path)
+            all_lines.append(LineString(smoothed_path))
+            
+        # combine everything into a single searchable geographic object
+        infrastructure_map = MultiLineString(all_lines)
+
+        # filter the solutions
+        clean_positions = []
+        clean_fitnesses = []
+        
+        for pos, fit in zip(positions, fitnesses):
+            solution_point = Point(pos[0], pos[1])
+            
+            # if a point is further away than the required clearance, keep it
+            if solution_point.distance(infrastructure_map) >= clearance:
+                clean_positions.append(pos)
+                clean_fitnesses.append(fit)
+
+        return np.array(clean_positions), np.array(clean_fitnesses)
