@@ -21,7 +21,7 @@ class LocationProblem():
         If 'facilities' is provided and not empty, D, M, and K are automatically inferred from the data.
         If 'facilities' is not provided, they are generated randomly based on D, M, K, and x_bounds.
         """
-        self.x_bounds = np.asarray(x_bounds) if x_bounds is not None else np.array([[0, 100], [0, 100]])
+        # self.x_bounds = np.asarray(x_bounds) if x_bounds is not None else np.array([[0, 100], [0, 100]])
         self.infrastructure = infrastructure if infrastructure is not None else {}
         self.map_styles = copy.deepcopy(map_styles) if map_styles is not None else {}
 
@@ -34,8 +34,18 @@ class LocationProblem():
             self.D = D
             self.M = M
             self.K = K if K is not None else [6, 3, 13, 3]
+
+        if x_bounds is not None:
+            self.x_bounds = np.asarray(x_bounds)
+        else:
+            self.x_bounds = np.tile([0, 100], (self.D, 1))
+
+        if not facilities:
             self.facilities = self._generate_random_facilities()
+            
         self._ensure_map_styles()
+
+
 
     def _generate_random_facilities(self)-> Dict[str, npt.NDArray]:
         """Helper method to randomly generate facility coordinates."""

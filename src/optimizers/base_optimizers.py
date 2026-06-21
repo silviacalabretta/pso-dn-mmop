@@ -34,7 +34,7 @@ class BasePSO(BaseOptimizer):
         self.w = w                  # intertia parameter (either a float or an array)
         self.c1 = c1                # cognitive parameter
         self.c2 = c2                # social parameter
-        self.v_bounds = np.asarray(v_bounds) if v_bounds is not None else np.array([[0.001, 1], [0.001, 1]])
+        self._base_v_bounds = np.asarray(v_bounds) if v_bounds is not None else np.array([0.001, 1])
 
     def _update_velocity(self, positions, velocities, pbest, leader):
         """
@@ -96,6 +96,13 @@ class BasePSO(BaseOptimizer):
             raise ValueError(f"x_bounds must have shape ({D}, 2), but got {x_bounds.shape}")
         if np.any(x_bounds[:, 0] >= x_bounds[:, 1]):
             raise ValueError("In x_bounds, the lower bound must be strictly less than the upper bound.")
+
+        # dynamically build v_bounds
+        if self._base_v_bounds.ndim == 1 or self._base_v_bounds.shape[0] == 1:
+            # if _base_v_bounds is a 1D array, tile it to be D x 2
+            self.v_bounds = np.tile(self._base_v_bounds, (D, 1))
+        else:
+            self.v_bounds = self._base_v_bounds
 
         # v_bounds (from the optimizer)
         if self.v_bounds.shape != (D, 2):
