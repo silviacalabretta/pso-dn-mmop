@@ -27,7 +27,7 @@ class MOPSO_CD(BasePSO):
         self.Q = Q
         self.tourn_size = tourn_size
 
-    def optimize(self, problem):
+    def optimize(self, problem, verbose:bool = True):
         """
         The main execution loop for MOPSO_CD.
         """
@@ -59,7 +59,7 @@ class MOPSO_CD(BasePSO):
         
         hist = [positions.copy()]
         
-        for i in tqdm(range(self.n_iter), desc="Running MOPSO_CD"):
+        for i in tqdm(range(self.n_iter), desc="Running MOPSO_CD", disable=not verbose):
             
             # select leaders for each particle via tournament
             leaders = self._select_leaders(rep_archive)

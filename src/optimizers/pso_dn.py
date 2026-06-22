@@ -27,7 +27,7 @@ class PSODN(BasePSO):
         # PSO-DN specific parameter
         self.R_l = R_l
 
-    def optimize(self, problem):
+    def optimize(self, problem, verbose:bool = True):
         """
         The main execution loop for PSO-DN.
         """
@@ -64,7 +64,7 @@ class PSODN(BasePSO):
         
         hist = [positions.copy()]
         
-        for i in tqdm(range(self.n_iter), desc="Running PSO-DN"):
+        for i in tqdm(range(self.n_iter), desc="Running PSO-DN", disable=not verbose):
             
             sorted_fronts, _ = get_sorted_fronts_and_scd(positions, fitnesses, nds)
 
