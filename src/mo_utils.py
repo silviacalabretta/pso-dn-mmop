@@ -49,34 +49,29 @@ def scd_for_front(front_positions: npt.NDArray, front_fitnesses: npt.NDArray) ->
     Returns
         scd (ndarray of shape (F,)): SCD values
     """
-    # compute standard CD in both spaces (pymoo)
+    # compute CD in both spaces
     CD_x = calc_crowding_distance(front_positions)
     CD_F = calc_crowding_distance(front_fitnesses)
     
     # CD_x = standard_cd(front_positions)
     # CD_F = standard_cd(front_fitnesses)
     
-    # compute average CD (ignoring infinity boundaries and the case front size <= 2)
+    # compute average CD (ignoring front extremes with CD=inf)
     finite_CD_x = CD_x[np.isfinite(CD_x)]
     finite_CD_F = CD_F[np.isfinite(CD_F)]
-    
     CD_avg_x = np.mean(finite_CD_x) if len(finite_CD_x) > 0 else 0
     CD_avg_F = np.mean(finite_CD_F) if len(finite_CD_F) > 0 else 0
     
-    # distinguish the case where one of the two CDs is above the average
+    # compute SCD
     condition = (CD_x > CD_avg_x) | (CD_F > CD_avg_F)
-    
-    scd = np.where(condition, 
-                   np.maximum(CD_x, CD_F), 
-                   np.minimum(CD_x, CD_F))
+    scd = np.where(condition, np.maximum(CD_x, CD_F), np.minimum(CD_x, CD_F))
      
     return scd
 
 
 def get_sorted_fronts_and_scd(positions: npt.NDArray, fitnesses: npt.NDArray, nds: NonDominatedSorting) -> Tuple[List[npt.NDArray], npt.NDArray]:
     """
-    Sorts the population into non-dominated fronts using pymoo, computes 
-    the SCD for each front, and returns the sorted fronts and the SCD values.
+    Non-dominated sort + SCD computation. Returns fronts sorted by SCD descending and the SCD values.
     
     Parameters
         positions (ndarray of shape (N, D)): position matrix of the population
@@ -90,7 +85,7 @@ def get_sorted_fronts_and_scd(positions: npt.NDArray, fitnesses: npt.NDArray, nd
         global_scd_values (ndarray of shape (N,)): SCD values of each individual
     """
     N = len(positions)
-    global_scd_values = np.zeros(N)
+    global_scd = np.zeros(N)
     
     # perform non-dominated sorting using pymoo
     fronts = nds.do(fitnesses) 
@@ -102,16 +97,16 @@ def get_sorted_fronts_and_scd(positions: npt.NDArray, fitnesses: npt.NDArray, nd
         front_X = positions[front_indices]
         front_F = fitnesses[front_indices]
         
-        # compute SCD for this front (using the function we wrote earlier)
+        # compute SCD for this front
         scd = scd_for_front(front_X, front_F)
         
         # map the calculated SCDs back to the global array
-        global_scd_values[front_indices] = scd
+        global_scd[front_indices] = scd
         
         # sort the current front indices descending by their SCD value
-        sorted_idx_by_scd = np.argsort(scd)[::-1]
-        sorted_front = np.array(front_indices)[sorted_idx_by_scd]
+        order = np.argsort(scd)[::-1]
+        sorted_front = np.array(front_indices)[order]
         
         sorted_fronts.append(sorted_front)
         
-    return sorted_fronts, global_scd_values
+    return sorted_fronts, global_scd
