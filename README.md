@@ -2,7 +2,7 @@
 
 This repository contains a Python implementation and experimental analysis of **PSO-DN**: a Particle Swarm Optimization algorithm with Dynamic Strategy for multimodal multi-objective optimization problems.
 
-The project focuses on a map-based location optimization benchmark, where the goal is to find locations that optimize multiple conflicting distance-based objectives. The problem is multimodal because several disconnected Pareto-optimal regions in the decision space can correspond to equivalent or similar Pareto-optimal trade-offs in the objective space.
+The project focuses on a map-based location optimization benchmark, where the goal is to find locations that optimize multiple conflicting distance-based objectives. The problem is multimodal because disconnected Pareto sets (PSs) in the decision space can correspond to equivalent Pareto optimal trade-offs in the objective space.
 
 The implementation is inspired by the paper:
 
@@ -20,8 +20,7 @@ The main goals of this project are:
 * reproduce the qualitative behaviour described in the reference paper;
 * tune the main hyperparameter of PSO-DN, the initial neighborhood radius;
 * compare PSO-DN with other multi-objective algorithms;
-* evaluate both objective space quality and decision space Pareto sets (PSs) recovery;
-* study whether PSO-DN is effective at discovering multiple disconnected PSs.
+* evaluate both objective space quality and decision space PSs recovery.
 
 ---
 
@@ -29,11 +28,9 @@ The main goals of this project are:
 
 The benchmark is a two-dimensional location optimization problem defined on a map-like search space[^1]. A candidate solution is a point $x = (x_1, x_2)$ in the decision space. The objectives are distance-based functions measuring proximity to different classes of facilities, such as elementary schools, high-schools, convenience stores, and railway stations.
 
-The problem is multi-objective because the objectives are conflicting: improving distance to one type of facility can worsen distance to another. It is also multimodal because the PS is not connected: several disjoint regions in the decision space may correspond to Pareto-optimal solutions.
+The problem is multi-objective because the objectives are conflicting: improving distance to one type of facility can worsen distance to another. It is also multimodal because the PS is not connected: there are in particular three Pareto sets, shown in the figure below.
 
 Infrastructure constraints are also considered: solutions lying on roads and railways are removed from the final feasible approximation sets.
-
-The pareto sets are shown in the following image.
 
 <p align="center"> <img src="results/pareto_sets.png" alt="Pareto sets" width="500"/> </p>
 
@@ -55,18 +52,19 @@ v_i(t) = w v_i(t-1) + c_1 r_1 (pbest_i(t) - x_i(t)) + c_2 r_2 (nbest_i(t) - x_i(
 $$
 
 $$
-x_i(t) = x_i(t-1) + v_i(t).
+x_i(t) = x_i(t-1) + v_i(t),
 $$
 
-Here:
+where:
 
 * $x_i(t)$ is the position of particle $i$;
 * $v_i(t)$ is its velocity;
 * $pbest_i(t)$ is a selected personal-best solution;
 * $nbest_i(t)$ is the best solution in the particle's current subpopulation;
-* $w$, $c_1$ and $c_2$ are the inertia and learning coefficients.
+* $w$, $c_1$ and $c_2$ are the inertia and learning coefficients;
+* $r_1, r_2$ are randomly generated vectors.
 
-Diversity is promoted using the **Special Crowding Distance (SCD)**, which combines crowding information in both the decision space and the objective space. In this implementation, SCD is used to select representative solutions from the archives and neighborhoods.
+Diversity is also promoted using the **Special Crowding Distance (SCD)**, which combines crowding information in both the decision space and the objective space. In this implementation, SCD is used to select representative solutions from the archives and neighborhoods.
 
 The original paper does not fully specify some implementation details, in particular how exactly the dynamic radius is used to construct sub-populations and how boundary handling is performed. Therefore, this repository implements a practical niching-based interpretation of the dynamic neighborhood mechanism.
 
@@ -76,10 +74,10 @@ The original paper does not fully specify some implementation details, in partic
 
 The comparative analysis includes:
 
-* **PSO-DN**: the implemented dynamic-neighborhood particle swarm method;
-* **MOPSO-CD**: a multi-objective PSO variant based on crowding-distance archive selection;
+* **PSO-DN**: the implemented dynamic radius particle swarm method;
+* **MOPSO-CD**: a multi-objective PSO variant based on crowding distance archive selection;
 * **NSGA-II**: a classical genetic multi-objective algorithm based on non-dominated sorting and crowding distance;
-* **NSGA-III**: a reference-direction-based genetic algorithm for many-objective optimization.
+* **NSGA-III**: a reference-direction-based genetic algorithm for multi-objective optimization.
 
 The comparison is performed over multiple independent runs.
 
@@ -105,18 +103,18 @@ The algorithms are evaluated using both objective-space and decision-space indic
 * **IGDX**  
   Measures the average distance between the obtained solution set $A_X$ and the true PS, represented by a finite set of Pareto optimal solutions $R_X$ uniformly sampled from it:
 
-  $$
-  IGDX(A_X, R_X) = \frac{1}{|R_X|} \sum_{x \in R_X} \min_{a \in A_X} |x-a|.
-  $$
+$$
+IGDX(A_X, R_X) = \frac{1}{|R_X|} \sum_{x \in R_X} \min_{a \in A_X} ||x-a||.
+$$
 
   Lower values are better.
 
 * **Balanced IGDX**  
-  Computes IGDX separately for each known Pareto-set region and then averages the values; in the benchmark problem, there are three PSs:
+  Computes IGDX separately for each known PS and then averages the values:
 
-  $$
-  IGDX_{bal} = \frac{1}{3} \sum_{i=1}^{3} IGDX_i.
-  $$
+$$
+IGDX_{\text{bal}} = \frac{1}{3} \sum_{i=1}^{3} IGDX_i.
+$$
 
   This prevents the largest PS from dominating the global IGDX value.
 
@@ -126,7 +124,7 @@ The algorithms are evaluated using both objective-space and decision-space indic
 * **All-regions-found percentage**  
   Percentage of runs in which all three PSs are discovered.
 
-* **Balanced coverage@$\varepsilon$**
+* **Balanced coverage@ $\varepsilon$**  
   Measures the fraction of reference PS points covered within a distance threshold $\varepsilon$, computed set-wise and then averaged across the three sets.
 
   In the reported results, $\varepsilon = 0.05$, matching the reference grid resolution.
@@ -171,15 +169,18 @@ A closer look at the region-wise IGDX reveals distinctly different algorithmic b
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
   <div>
-    <img src="results/regions_igdx.png" alt="Region IGDX" width="400"/>
+    <p align="center"> <img src="results/regions_igdx.png" alt="Region IGDX" width="400"/></p>
   </div>
   <div>
-    <img src="results/region_percentage.png" alt="Percentage of runs where all PSs are found" width="500"/>
+    <p align="center"> <img src="results/region_percentage.png" alt="Percentage of runs where all PSs are found" width="400"/></p>
   </div>
 </div> 
 
-
 Overall, the results suggest that PSO-DN is effective at locating multiple disconnected PSs, whereas the GAs excel at dense, accurate local coverage. Still the current implementation does not dominate the genetic algorithms in terms of HV or fine-grained decision space coverage.
+
+The following plot shows a representative example of the solutions obtained by the different algorithms on the map. PSO-DN is able to place solutions across the disconnected Pareto-set regions, which is coherent with the metrics values.
+
+<p align="center"> <img src="results/solutions_example.png" alt="Representative solution sets on the map" width="500"/> </p>
 
 ---
 
@@ -262,6 +263,16 @@ python main.py
 
 This initializes the location problem, runs the optimizer, and displays the discovered non-dominated solutions on the map.
 
+### Inspect the PSO-DN algorithm interactively
+
+Open:
+
+```text
+notebooks/pso-dn-algorithm.ipynb
+```
+
+This notebook is useful for understanding the PSO-DN implementation and visualizing how the algorithm behaves on the location problem.
+
 ### Generate the reference Pareto set
 
 The dense reference Pareto set used for IGDX and coverage can be generated with:
@@ -304,16 +315,6 @@ This notebook performs the main experimental comparison. It includes:
 * final summary tables and plots.
 
 The notebook uses cached results from `results/` when available, so the full experiment does not need to be recomputed every time.
-
-### Inspect the PSO-DN algorithm interactively
-
-Open:
-
-```text
-notebooks/pso-dn-algorithm.ipynb
-```
-
-This notebook is useful for understanding the PSO-DN implementation and visualizing how the algorithm behaves on the location problem.
 
 ---
 
