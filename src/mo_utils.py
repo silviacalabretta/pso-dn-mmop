@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from typing import List, Tuple
+from scipy.spatial import cKDTree
 from pymoo.operators.survival.rank_and_crowding.metrics import calc_crowding_distance
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 
@@ -110,3 +111,66 @@ def get_sorted_fronts_and_scd(positions: npt.NDArray, fitnesses: npt.NDArray, nd
         sorted_fronts.append(sorted_front)
         
     return sorted_fronts, global_scd
+
+
+def igdx_kdtree(X_ref, X_approx):
+    """
+    IGDX = mean distance from each reference Pareto-set point
+    to the closest approximated solution in decision space.
+    """
+    if len(X_ref) == 0:
+        return np.nan
+    
+    if len(X_approx) == 0:
+        return 999.0
+
+    X_ref = np.asarray(X_ref, dtype=float)
+    X_approx = np.asarray(X_approx, dtype=float)
+
+    tree = cKDTree(X_approx)
+    distances, _ = tree.query(X_ref, k=1)
+
+    return float(np.mean(distances))
+
+
+def coverage_at_epsilon(X_ref, X_approx, eps=1.0):
+    """
+    Fraction of reference Pareto-set points that are within eps
+    of at least one approximated solution.
+    """
+    if len(X_ref) == 0:
+        return np.nan
+
+    if len(X_approx) == 0:
+        return 0.0
+
+    tree = cKDTree(X_approx)
+    distances, _ = tree.query(X_ref, k=1)
+
+    return float(np.mean(distances <= eps))
+
+
+def in_box(X, box, tol=1e-9):
+    x1, x2, y1, y2 = box
+    return (
+        (X[:, 0] >= x1 - tol) &
+        (X[:, 0] <= x2 + tol) &
+        (X[:, 1] >= y1 - tol) &
+        (X[:, 1] <= y2 + tol)
+    )
+
+
+def count_solutions_by_region(X, regions):
+    """
+    Count how many approximated solutions lie in each known Pareto region.
+    """
+    counts = {}
+
+    for r_name, box in regions.items():
+        counts[r_name] = int(np.sum(in_box(X, box)))
+
+    counts["outside"] = int(
+        len(X) - sum(counts[r] for r in regions.keys())
+    )
+
+    return counts

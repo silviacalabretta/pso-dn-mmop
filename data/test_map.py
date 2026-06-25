@@ -55,3 +55,9 @@ map_styles = {
     'Roads':                   {'color': "#B6B5B5", 'linestyle': '-', 'linewidth': 7, 'alpha': 1},
     'Railways':                {'color': '#000000', 'linestyle': '--', 'linewidth': 2, 'alpha': 0.8, 'smooth': True}
 }
+
+REGIONS = {
+    "R1": (10.0, 20.0, 75.0, 85.0),
+    "R2": (45.0, 60.0, 20.0, 40.0),
+    "R3": (30.0, 60.0, 55.0, 100.0),
+}
