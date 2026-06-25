@@ -180,7 +180,7 @@ Overall, the results suggest that PSO-DN is effective at locating multiple disco
 
 The following plot shows a representative example of the solutions obtained by the different algorithms on the map. PSO-DN is able to place solutions across the disconnected Pareto-set regions, which is coherent with the metrics values.
 
-<p align="center"> <img src="results/solutions_example.png" alt="Representative solution sets on the map" width="500"/> </p>
+<p align="center"> <img src="results/solutions_example.png" alt="Representative solution sets on the map" width="700"/> </p>
 
 ---
 
