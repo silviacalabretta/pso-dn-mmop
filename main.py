@@ -27,28 +27,28 @@ def main():
 
     # instantiate the optimizer
 
-    # print("Initializing the PSO-DN Optimizer...")
-    # optimizer = PSODN(
-    #     pop_size=200, 
-    #     n_iter=100, 
-    #     R_l=10.0,       
-    #     w=0.729,          
-    #     c1=1.49445, 
-    #     c2=1.49445, 
-    #     v_bounds=v_bounds
-    # )
-
-    print("Initializing the MOPSO_CD Optimizer...")
-    optimizer = MOPSO_CD(
+    print("Initializing the PSO-DN Optimizer...")
+    optimizer = PSODN(
         pop_size=200, 
         n_iter=100, 
-        Q=500,
-        tourn_size = 2,       
-        w=0.8,          
+        R_l=10.0,       
+        w=0.729,          
         c1=1.49445, 
         c2=1.49445, 
         v_bounds=v_bounds
     )
+
+    # print("Initializing the MOPSO_CD Optimizer...")
+    # optimizer = MOPSO_CD(
+    #     pop_size=200, 
+    #     n_iter=100, 
+    #     Q=500,
+    #     tourn_size = 2,       
+    #     w=0.8,          
+    #     c1=1.49445, 
+    #     c2=1.49445, 
+    #     v_bounds=v_bounds
+    # )
 
     # run the optimization
     print("Starting optimization loop...")
